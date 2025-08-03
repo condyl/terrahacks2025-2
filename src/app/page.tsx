@@ -1,41 +1,67 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { nanoid } from "nanoid";
-import { FaUser, FaRobot } from "react-icons/fa";
-
-import { useEnterSubmit } from "@/hooks/use-enter-submit";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 import LlmLogo from "@/components/llm-logo";
+import ChatMessage from "@/components/chat-message";
+import ChatForm from "@/components/chat-form";
+import LoadingIndicator from "@/components/loading-indicator";
+import {
+  generateId,
+  handleApiError,
+  sanitizeInput,
+  isValidMessage,
+} from "@/lib/utils";
+import type { Message, ChatResponse, ApiResponse } from "@/lib/types";
 
 export default function Chat() {
-  const [messages, setMessages] = useState<
-    { id: string; role: "user" | "assistant"; content: string }[]
-  >([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { formRef, onKeyDown } = useEnterSubmit();
+  const [error, setError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    setMessages([
-      {
-        id: nanoid(),
-        role: "assistant",
-        content:
-          "Welcome to the Healthcare Chat! How can I help you today? Please remember, I am an AI assistant and not a medical professional.",
-      },
-    ]);
+    const welcomeMessage: Message = {
+      id: generateId(),
+      role: "assistant",
+      content:
+        "👋 Welcome to HealthAI Chat! I'm your AI healthcare assistant. I can help answer health questions and provide medical information.\n\n**Important:** I'm not a substitute for professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare providers for medical concerns.",
+      timestamp: new Date(),
+    };
+    setMessages([welcomeMessage]);
   }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!input) return;
 
-    const userMessage = { id: nanoid(), role: "user" as const, content: input };
+    const sanitizedInput = sanitizeInput(input);
+    if (!isValidMessage(sanitizedInput)) {
+      setError("Please enter a valid message (1-4000 characters)");
+      return;
+    }
+
+    // Clear any existing errors
+    setError(null);
+
+    const userMessage: Message = {
+      id: generateId(),
+      role: "user",
+      content: sanitizedInput,
+      timestamp: new Date(),
+    };
+
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -43,113 +69,121 @@ export default function Chat() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: input }),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ prompt: sanitizedInput }),
       });
 
       if (!response.ok) {
-        throw new Error("API request failed");
+        const errorData: ApiResponse = await response.json();
+        throw new Error(
+          errorData.error || `HTTP ${response.status}: ${response.statusText}`
+        );
       }
 
-      const { response: assistantResponse } = await response.json();
+      const data: ChatResponse = await response.json();
 
-      const assistantMessage = {
-        id: nanoid(),
-        role: "assistant" as const,
-        content: assistantResponse,
+      if (!data.response) {
+        throw new Error("Invalid response format from server");
+      }
+
+      const assistantMessage: Message = {
+        id: generateId(),
+        role: "assistant",
+        content: data.response,
+        timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error(error);
-      const errorMessage = {
-        id: nanoid(),
-        role: "assistant" as const,
-        content: "Sorry, something went wrong. Please try again.",
+      console.error("Chat error:", error);
+      const chatError = handleApiError(error);
+
+      const errorMessage: Message = {
+        id: generateId(),
+        role: "assistant",
+        content: `I apologize, but I encountered an error: ${chatError.message}\n\nPlease try again in a moment.`,
+        timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, errorMessage]);
+      setError(chatError.message);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const clearError = () => setError(null);
+
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <Card className="w-[800px] h-[90vh] flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-center">
-          <LlmLogo />
-          <CardTitle className="text-2xl font-bold text-center text-blue-600 ml-2">
-            Healthcare Chat
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col flex-grow">
-          <ScrollArea className="flex-grow p-4">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex items-start gap-4 ${
-                    message.role === "user" ? "justify-end" : ""
-                  }`}
+    <div className="min-h-screen flex items-center justify-center p-4 lg:p-6">
+      <div className="w-full max-w-5xl h-[95vh] flex flex-col">
+        {/* Header */}
+        <div className="mb-6">
+          <Card className="border-none shadow-lg bg-white/80 backdrop-blur-md">
+            <CardHeader className="text-center py-6">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <LlmLogo />
+                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  HealthAI Chat
+                </CardTitle>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Your AI-powered healthcare assistant
+              </p>
+            </CardHeader>
+          </Card>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-4">
+            <Alert variant="destructive" className="bg-red-50 border-red-200">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>{error}</span>
+                <button
+                  onClick={clearError}
+                  className="text-red-600 hover:text-red-800 font-medium"
+                  aria-label="Dismiss error"
                 >
-                  {message.role === "assistant" && (
-                    <Avatar>
-                      <AvatarFallback>
-                        <FaRobot />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div
-                    className={`rounded-lg p-3 max-w-[70%] ${
-                      message.role === "user"
-                        ? "bg-blue-500 text-white"
-                        : "bg-blue-100 text-black"
-                    }`}
-                  >
-                    {message.content}
-                  </div>
-                  {message.role === "user" && (
-                    <Avatar>
-                      <AvatarFallback>
-                        <FaUser />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                  ✕
+                </button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {/* Chat Container */}
+        <Card className="flex-1 border-none shadow-xl bg-white/90 backdrop-blur-md overflow-hidden">
+          <CardContent className="p-0 h-full flex flex-col">
+            {/* Messages Area */}
+            <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-6 space-y-6">
+                  {messages.map((message) => (
+                    <ChatMessage key={message.id} message={message} />
+                  ))}
+                  {isLoading && <LoadingIndicator />}
+                  <div ref={messagesEndRef} />
                 </div>
-              ))}
-              {isLoading && (
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarFallback>
-                      <FaRobot />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="rounded-lg p-3 max-w-[70%] bg-blue-100 text-black">
-                    Thinking...
-                  </div>
-                </div>
-              )}
+              </ScrollArea>
             </div>
-          </ScrollArea>
-          <form
-            ref={formRef}
-            onSubmit={handleSubmit}
-            className="flex items-center p-4 border-t"
-          >
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={onKeyDown}
-              placeholder="Ask a healthcare question..."
-              className="flex-grow resize-none"
-              rows={1}
-              disabled={isLoading}
-            />
-            <Button type="submit" className="ml-4" disabled={isLoading}>
-              Send
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+
+            {/* Input Form */}
+            <div className="border-t border-border/50 bg-muted/30">
+              <ChatForm
+                input={input}
+                onInputChange={setInput}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
