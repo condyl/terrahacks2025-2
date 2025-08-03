@@ -66,7 +66,7 @@ export default function ChatForm({
   };
 
   return (
-    <div className="border-t border-gray-200 bg-white p-4">
+    <div className="bg-white p-4">
       <div className="max-w-5xl mx-auto">
         <form ref={formRef} onSubmit={handleSubmit} className="flex items-end gap-2 p-2">
           {/* Image Preview */}
