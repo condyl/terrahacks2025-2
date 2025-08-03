@@ -25,6 +25,7 @@ export default function Chat() {
   const [error, setError] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isAiTyping, setIsAiTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -35,6 +36,10 @@ export default function Chat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleTypingComplete = () => {
+    setIsAiTyping(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, selectedImage?: File | null) => {
     e.preventDefault();
@@ -136,6 +141,8 @@ export default function Chat() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      // AI will start typing, so set isAiTyping to true
+      setIsAiTyping(true);
     } catch (error) {
       console.error("Chat error:", error);
       const chatError = handleApiError(error);
@@ -149,6 +156,8 @@ export default function Chat() {
 
       setMessages((prev) => [...prev, errorMessage]);
       setError(chatError.message);
+      // Error message will also trigger typing animation
+      setIsAiTyping(true);
     } finally {
       setIsLoading(false);
     }
@@ -245,6 +254,7 @@ export default function Chat() {
                 onInputChange={setInput}
                 onSubmit={handleSubmit}
                 isLoading={isLoading}
+                disabled={isAiTyping}
               />
             </div>
 
@@ -323,7 +333,11 @@ export default function Chat() {
             {/* Messages Area */}
             <div className="p-6 space-y-6 min-h-[calc(100vh-200px)]">
               {messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
+                <ChatMessage 
+                  key={message.id} 
+                  message={message} 
+                  onTypingComplete={message.role === "assistant" ? handleTypingComplete : undefined}
+                />
               ))}
               {isLoading && <LoadingIndicator />}
               <div ref={messagesEndRef} />
@@ -336,6 +350,7 @@ export default function Chat() {
                 onInputChange={setInput}
                 onSubmit={handleSubmit}
                 isLoading={isLoading}
+                disabled={isAiTyping}
               />
             </div>
           </div>

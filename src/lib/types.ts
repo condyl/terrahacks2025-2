@@ -28,6 +28,7 @@ export interface ChatFormProps {
   onInputChange: (value: string) => void;
   onSubmit: (e: React.FormEvent<HTMLFormElement>, selectedImage?: File | null) => void;
   isLoading: boolean;
+  disabled?: boolean;
 }
 
 // Message component props

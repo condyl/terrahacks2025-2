@@ -4,13 +4,21 @@ import { useEnterSubmit } from "@/hooks/use-enter-submit";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { isValidMessage, isValidImageFile, formatFileSize } from "@/lib/utils";
-import type { ChatFormProps } from "@/lib/types";
 
-export default function ChatForm({ 
-  input, 
-  onInputChange, 
-  onSubmit, 
-  isLoading
+interface ChatFormProps {
+  input: string;
+  onInputChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>, selectedImage?: File | null) => void;
+  isLoading: boolean;
+  disabled?: boolean;
+}
+
+export default function ChatForm({
+  input,
+  onInputChange,
+  onSubmit,
+  isLoading,
+  disabled = false,
 }: ChatFormProps) {
   const { formRef, onKeyDown } = useEnterSubmit();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,47 +55,47 @@ export default function ChatForm({
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    // Prevent submission if disabled or loading
+    if (disabled || isLoading) {
+      e.preventDefault();
+      return;
+    }
     onSubmit(e, selectedImage);
     // Clear image after submit
     removeImage();
   };
 
   return (
-    <div className="p-4">
-      <form
-        ref={formRef}
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-3"
-      >
-        {/* Image Preview */}
-        {selectedImage && imagePreview && (
-          <div className="relative inline-block">
-            <div className="bg-white border-2 border-gray-200 rounded-lg p-2 max-w-xs">
-              <img 
-                src={imagePreview} 
-                alt="Selected image" 
-                className="max-w-full h-auto max-h-32 rounded"
-              />
-              <div className="text-xs text-muted-foreground mt-1">
-                {selectedImage.name} ({formatFileSize(selectedImage.size)})
+    <div className="border-t border-gray-200 bg-white p-4">
+      <div className="max-w-5xl mx-auto">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex items-end gap-2 p-2">
+          {/* Image Preview */}
+          {selectedImage && imagePreview && (
+            <div className="relative inline-block">
+              <div className="bg-white border-2 border-gray-200 rounded-lg p-2 max-w-xs">
+                <img 
+                  src={imagePreview} 
+                  alt="Selected image" 
+                  className="max-w-full h-auto max-h-32 rounded"
+                />
+                <div className="text-xs text-muted-foreground mt-1">
+                  {selectedImage.name} ({formatFileSize(selectedImage.size)})
+                </div>
               </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                onClick={removeImage}
+              >
+                <X className="h-3 w-3" />
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-              onClick={removeImage}
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        )}
+          )}
 
-        {/* Input Row */}
-        <div className="flex items-end gap-3">
-          <div className="flex-1 relative">
+          {/* Input Row */}
+          <div className="flex-1">
             <Textarea
               value={input}
               onChange={handleInputChange}
@@ -98,7 +106,7 @@ export default function ChatForm({
                   : "Describe your symptoms or health concerns..."
               }
               className="min-h-[52px] max-h-32 resize-none border-2 bg-white focus:border-red-400 focus:ring-0 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors border-gray-200"
-              disabled={isLoading}
+              disabled={disabled || isLoading}
               rows={1}
               maxLength={4000}
             />
@@ -119,7 +127,7 @@ export default function ChatForm({
             size="sm"
             className="h-12 w-12 rounded-xl border-2 border-gray-200 hover:border-red-400 transition-colors"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading}
+            disabled={disabled || isLoading}
           >
             <ImagePlus className="h-5 w-5" />
           </Button>
@@ -127,26 +135,27 @@ export default function ChatForm({
           {/* Send Button */}
           <Button 
             type="submit" 
-            disabled={isLoading || !isValid}
-            className="size-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-300 disabled:to-gray-400 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105"
+            disabled={disabled || isLoading || !isValid}
+            className="min-w-[44px] h-[44px] bg-red-500 hover:bg-red-600"
+            size="sm"
           >
             {isLoading ? (
-              <Loader2 className="size-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="size-5" />
+              <Send className="h-4 w-4" />
             )}
           </Button>
-        </div>
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageSelect}
-          className="hidden"
-        />
-      </form>
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+        </form>
+      </div>
       
       <div className="flex items-center justify-center mt-3 text-xs text-muted-foreground">
         <span>Baymax Lite provides healthcare information but is not a substitute for professional medical care.</span>

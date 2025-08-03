@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User, Volume2, VolumeX } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -10,7 +10,7 @@ import BaymaxLogo from "@/components/llm-logo";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { useTextToSpeech } from "@/hooks/use-text-to-speech";
 
-export default function ChatMessage({ message }: ChatMessageProps) {
+export default function ChatMessage({ message, onTypingComplete }: ChatMessageProps & { onTypingComplete?: () => void }) {
   const isUser = message.role === "user";
   const [isHovered, setIsHovered] = useState(false);
   const { speak, stop, isPlaying, isSupported } = useTextToSpeech();
@@ -19,6 +19,13 @@ export default function ChatMessage({ message }: ChatMessageProps) {
     isUser ? message.content : message.content,
     isUser ? 0 : 5 
   );
+
+  // Call onTypingComplete when AI message typing animation finishes
+  useEffect(() => {
+    if (!isUser && isComplete && onTypingComplete) {
+      onTypingComplete();
+    }
+  }, [isComplete, isUser, onTypingComplete]);
 
   // Use the animated text for AI messages, original text for user messages
   const contentToShow = isUser ? message.content : displayedText;
