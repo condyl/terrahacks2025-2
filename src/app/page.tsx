@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import LlmLogo from "@/components/llm-logo";
+import BaymaxLogo from "@/components/llm-logo";
 import ChatMessage from "@/components/chat-message";
 import ChatForm from "@/components/chat-form";
 import LoadingIndicator from "@/components/loading-indicator";
@@ -33,7 +33,7 @@ export default function Chat() {
       id: generateId(),
       role: "assistant",
       content:
-        "👋 Welcome to HealthAI Chat! I'm your AI healthcare assistant. I can help answer health questions and provide medical information.\n\n**Important:** I'm not a substitute for professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare providers for medical concerns.",
+        "Hello! I am Baymax Lite, your personal healthcare companion. 🤖\n\nI was created to help with your healthcare needs. I will scan you now... *scanning complete* ✅\n\nHow can I assist with your health and wellness today? Please remember that I am not a substitute for professional medical care.",
       timestamp: new Date(),
     };
     setMessages([welcomeMessage]);
@@ -118,28 +118,29 @@ export default function Chat() {
   const clearError = () => setError(null);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 lg:p-6">
-      <div className="w-full max-w-5xl h-[95vh] flex flex-col">
-        {/* Header */}
-        <div className="mb-6">
-          <Card className="border-none shadow-lg bg-white/80 backdrop-blur-md">
-            <CardHeader className="text-center py-6">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <LlmLogo />
-                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  HealthAI Chat
-                </CardTitle>
-              </div>
-              <p className="text-muted-foreground text-sm">
-                Your AI-powered healthcare assistant
-              </p>
-            </CardHeader>
-          </Card>
+    <div className="min-h-screen flex flex-col">
+      {/* Header - Now Sticky */}
+      <div className="sticky top-0 z-50 flex-shrink-0 py-4 px-4 lg:px-6 bg-white border-b border-gray-200">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-center gap-3">
+            <BaymaxLogo />
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent">
+              Baymax Lite
+            </CardTitle>
+          </div>
+          <p className="text-muted-foreground text-sm text-center mt-1">
+            Your Personal Healthcare Companion
+          </p>
+          <div className="text-xs text-red-600 font-medium text-center mt-1">
+            "I am satisfied with my care"
+          </div>
         </div>
+      </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-4">
+      {/* Error Alert */}
+      {error && (
+        <div className="flex-shrink-0 px-4 lg:px-6 py-2">
+          <div className="max-w-5xl mx-auto">
             <Alert variant="destructive" className="bg-red-50 border-red-200">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="flex items-center justify-between">
@@ -154,26 +155,28 @@ export default function Chat() {
               </AlertDescription>
             </Alert>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Chat Container */}
-        <Card className="flex-1 border-none shadow-xl bg-white/90 backdrop-blur-md overflow-hidden">
-          <CardContent className="p-0 h-full flex flex-col">
-            {/* Messages Area */}
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-6 space-y-6">
-                  {messages.map((message) => (
-                    <ChatMessage key={message.id} message={message} />
-                  ))}
-                  {isLoading && <LoadingIndicator />}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
-            </div>
+      {/* Chat Container */}
+      <div className="flex-1 bg-gray-50">
+        <div className="h-full flex flex-col">
+          {/* Messages Area */}
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="max-w-5xl mx-auto p-6 space-y-6">
+                {messages.map((message) => (
+                  <ChatMessage key={message.id} message={message} />
+                ))}
+                {isLoading && <LoadingIndicator />}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+          </div>
 
-            {/* Input Form */}
-            <div className="border-t border-border/50 bg-muted/30">
+          {/* Input Form */}
+          <div className="flex-shrink-0 bg-white border-t border-gray-200">
+            <div className="max-w-5xl mx-auto">
               <ChatForm
                 input={input}
                 onInputChange={setInput}
@@ -181,8 +184,8 @@ export default function Chat() {
                 isLoading={isLoading}
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

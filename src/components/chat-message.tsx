@@ -1,10 +1,11 @@
 import React from "react";
-import { Bot, User } from "lucide-react";
+import { User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn, formatTime } from "@/lib/utils";
 import type { ChatMessageProps } from "@/lib/types";
+import BaymaxLogo from "@/components/llm-logo";
 
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
@@ -17,21 +18,17 @@ export default function ChatMessage({ message }: ChatMessageProps) {
       )}
     >
       {/* Avatar */}
-      <Avatar className={cn(
-        "size-10 shrink-0 ring-2 ring-offset-2",
-        isUser 
-          ? "ring-blue-200 ring-offset-blue-50" 
-          : "ring-emerald-200 ring-offset-emerald-50"
-      )}>
-        <AvatarFallback className={cn(
-          "text-white font-medium",
-          isUser 
-            ? "bg-gradient-to-br from-blue-500 to-blue-600" 
-            : "bg-gradient-to-br from-emerald-500 to-emerald-600"
-        )}>
-          {isUser ? <User className="size-5" /> : <Bot className="size-5" />}
-        </AvatarFallback>
-      </Avatar>
+      {isUser ? (
+        <Avatar className="size-10 shrink-0 ring-2 ring-offset-2 ring-red-200 ring-offset-red-50">
+          <AvatarFallback className="bg-gradient-to-br from-red-500 to-red-600 text-white font-medium">
+            <User className="size-5" />
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        <div className="size-10 shrink-0">
+          <BaymaxLogo />
+        </div>
+      )}
 
       {/* Message Content */}
       <div className={cn(
@@ -43,8 +40,8 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           className={cn(
             "inline-block px-4 py-3 rounded-2xl shadow-sm max-w-[85%] relative",
             isUser
-              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-md"
-              : "bg-white border border-border/50 text-foreground rounded-bl-md"
+              ? "bg-gradient-to-r from-red-500 to-red-600 text-white rounded-br-md"
+              : "bg-white border border-gray-200 text-foreground rounded-bl-md"
           )}
         >
           {/* Message tail */}
@@ -52,8 +49,8 @@ export default function ChatMessage({ message }: ChatMessageProps) {
             className={cn(
               "absolute w-3 h-3 rotate-45",
               isUser
-                ? "bg-blue-600 -bottom-1 right-2"
-                : "bg-white border-r border-b border-border/50 -bottom-1 left-2"
+                ? "bg-red-600 -bottom-1 right-2"
+                : "bg-white border-r border-b border-gray-200 -bottom-1 left-2"
             )}
           />
           
@@ -72,12 +69,12 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                   ol: ({ children }) => <ol className="mb-2 last:mb-0 ml-4">{children}</ol>,
                   li: ({ children }) => <li className="mb-1">{children}</li>,
                   code: ({ children }) => (
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                    <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">
                       {children}
                     </code>
                   ),
                   pre: ({ children }) => (
-                    <pre className="bg-muted p-3 rounded-lg overflow-x-auto">
+                    <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto">
                       {children}
                     </pre>
                   ),

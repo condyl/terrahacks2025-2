@@ -1,56 +1,27 @@
 import React from "react";
+import Image from "next/image";
 
-const LlmLogo = () => {
+const BaymaxLogo = () => {
   return (
     <div className="relative">
-      <svg
-        width="36"
-        height="36"
-        viewBox="0 0 36 36"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="drop-shadow-lg"
-      >
-        {/* Background gradient circle */}
-        <defs>
-          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#3B82F6" />
-            <stop offset="50%" stopColor="#6366F1" />
-            <stop offset="100%" stopColor="#8B5CF6" />
-          </linearGradient>
-        </defs>
-        
-        <circle cx="18" cy="18" r="18" fill="url(#logoGradient)" />
-        
-        {/* Healthcare cross */}
-        <path
-          d="M18 8V28M8 18H28"
-          stroke="white"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        
-        {/* AI pulse effect */}
-        <circle
-          cx="18"
-          cy="18"
-          r="4"
-          fill="white"
-          opacity="0.9"
-        />
-        <circle
-          cx="18"
-          cy="18"
-          r="2"
-          fill="url(#logoGradient)"
-        />
-      </svg>
+      {/* Radial gradient background circle with border */}
+      <div className="w-12 h-12 bg-gradient-radial from-red-500 to-red-600 rounded-full border-2 border-red-400 flex items-center justify-center shadow-lg p-1">
+        <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
+          <Image
+            src="/baymax.png"
+            alt="Baymax Lite"
+            width={28}
+            height={28}
+            className="rounded-full"
+            priority
+          />
+        </div>
+      </div>
       
       {/* Animated pulse ring */}
-      <div className="absolute inset-0 rounded-full border-2 border-blue-400/30 animate-ping" />
+      <div className="absolute inset-0 rounded-full border-2 border-red-300/30 animate-ping" />
     </div>
   );
 };
 
-export default LlmLogo;
+export default BaymaxLogo;

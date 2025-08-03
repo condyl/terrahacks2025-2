@@ -32,8 +32,8 @@ export default function ChatForm({
             value={input}
             onChange={handleInputChange}
             onKeyDown={onKeyDown}
-            placeholder="Ask me anything about health and wellness..."
-            className="min-h-[52px] max-h-32 resize-none border-2 border-border/50 focus:border-primary/50 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors"
+            placeholder="Describe your symptoms or health concerns..."
+            className="min-h-[52px] max-h-32 resize-none border-2 border-border/50 focus:border-red-400/50 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors"
             disabled={isLoading}
             rows={1}
             maxLength={4000}
@@ -53,7 +53,7 @@ export default function ChatForm({
         <Button 
           type="submit" 
           disabled={isLoading || !isValid}
-          className="size-12 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-400 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105"
+          className="size-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-300 disabled:to-gray-400 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105"
         >
           {isLoading ? (
             <Loader2 className="size-5 animate-spin" />
@@ -64,7 +64,7 @@ export default function ChatForm({
       </form>
       
       <div className="flex items-center justify-center mt-3 text-xs text-muted-foreground">
-        <span>HealthAI can make mistakes. Please verify important information.</span>
+        <span>Baymax Lite provides healthcare information but is not a substitute for professional medical care.</span>
       </div>
     </div>
   );

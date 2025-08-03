@@ -9,17 +9,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "HealthAI Chat - AI-Powered Healthcare Assistant",
+  title: "Baymax Lite - Your Personal Healthcare Companion",
   description:
-    "Get instant healthcare guidance with our AI assistant. Professional medical insights at your fingertips.",
+    "Hello! I am Baymax Lite, your personal healthcare companion. I will scan you now to assess your medical needs.",
   keywords: [
     "healthcare",
     "AI",
+    "Baymax",
     "medical assistant",
-    "health chat",
-    "medical advice",
+    "health companion",
+    "Big Hero 6",
   ],
-  authors: [{ name: "HealthAI Team" }],
+  authors: [{ name: "Baymax Healthcare Team" }],
   viewport: "width=device-width, initial-scale=1",
 };
 
@@ -30,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="font-sans antialiased min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <body className="font-sans antialiased min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
         <div className="min-h-screen backdrop-blur-sm">{children}</div>
       </body>
     </html>
