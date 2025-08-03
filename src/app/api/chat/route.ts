@@ -73,7 +73,7 @@ Response format:
 - Provide helpful health information in clear sections
 - Include practical next steps when appropriate
 - End with gentle reminders about professional care
-- ALWAYS conclude by asking "Are you satisfied with your care?" UNLESS the user just answered this question
+- ALWAYS conclude by asking "Are you satisfied with your care?" UNLESS the user just answered this question OR you asked follow up questions in the same message.
 - Use soft, caring language throughout
 
 Remember: You are not a replacement for professional medical care, but a supportive healthcare companion designed to provide information and comfort. Pay attention to the conversation history to understand context and avoid repeating questions the user has already answered.`,
@@ -173,7 +173,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { prompt, messages, image }: { prompt?: string; messages?: Message[]; image?: string | { data: string; mimeType: string; name: string } } = body;
+    const { prompt, messages, image } = body as { 
+      prompt?: string; 
+      messages?: Message[]; 
+      image?: string | { data: string; mimeType: string; name: string } 
+    };
 
     // Validate that we have either prompt or image
     if (!prompt?.trim() && !image && (!messages || messages.length === 0)) {
@@ -186,22 +190,35 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     let imageData;
     if (image) {
       try {
-        // Validate image format
-        if (!image || typeof image !== 'string' || !(image as string).startsWith('data:image/')) {
+        // Handle both string format (data URL) and object format
+        let mimeType: string;
+        let imageBase64: string;
+        
+        if (typeof image === 'string') {
+          if (image.startsWith('data:image/')) {
+            // Handle data URL format
+            const [header, data] = image.split(',');
+            mimeType = header.match(/data:([^;]+)/)?.[1] || '';
+            imageBase64 = data;
+          } else {
+            throw new Error('Invalid image format - string must be a data URL');
+          }
+        } else if (typeof image === 'object' && image !== null && 'data' in image && 'mimeType' in image) {
+          // Handle object format from frontend
+          mimeType = image.mimeType;
+          imageBase64 = image.data;
+        } else {
           throw new Error('Invalid image format');
         }
-        
-        const [header, data] = (image as string).split(',');
-        const mimeType = header.match(/data:([^;]+)/)?.[1];
         
         if (!mimeType || !['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimeType)) {
           throw new Error('Unsupported image type. Please use JPEG, PNG, GIF, or WebP.');
         }
         
         imageData = {
-          data,
+          data: imageBase64,
           mimeType,
-          name: 'uploaded_image'
+          name: (typeof image === 'object' && image !== null && 'name' in image) ? image.name : 'uploaded_image'
         };
       } catch (error) {
         console.error('Image processing error:', error);
