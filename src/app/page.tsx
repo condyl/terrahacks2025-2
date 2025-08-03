@@ -70,17 +70,8 @@ export default function Chat() {
     if (!hasStarted) {
       setIsTransitioning(true);
       
-      // Add welcome message first, then user message
-      const welcomeMessage: Message = {
-        id: generateId(),
-        role: "assistant",
-        content:
-          "Hello! I am Baymax Lite, your personal healthcare companion. 🤖\n\nI was created to help with your healthcare needs. I will scan you now... *scanning complete* ✅\n\nHow can I assist with your health and wellness today? Please remember that I am not a substitute for professional medical care.",
-        timestamp: new Date(),
-      };
-
-      // Set both messages at once to avoid race conditions
-      setMessages([welcomeMessage, userMessage]);
+      // Just add the user message - no welcome message
+      setMessages([userMessage]);
 
       // Start transition, then change layout after a brief delay
       setTimeout(() => {

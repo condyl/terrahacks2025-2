@@ -6,9 +6,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn, formatTime, formatFileSize } from "@/lib/utils";
 import type { ChatMessageProps } from "@/lib/types";
 import BaymaxLogo from "@/components/llm-logo";
+import { useTypewriter } from "@/hooks/use-typewriter";
 
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
+  const { displayedText, isComplete } = useTypewriter(
+    isUser ? message.content : message.content,
+    isUser ? 0 : 8 // Only animate AI messages
+  );
+
+  // Use the animated text for AI messages, original text for user messages
+  const contentToShow = isUser ? message.content : displayedText;
 
   return (
     <div
@@ -77,29 +85,35 @@ export default function ChatMessage({ message }: ChatMessageProps) {
               : "prose-slate prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-em:text-foreground prose-code:text-foreground prose-blockquote:text-muted-foreground"
           )}>
             {message.role === "assistant" ? (
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                  ul: ({ children }) => <ul className="mb-2 last:mb-0 ml-4">{children}</ul>,
-                  ol: ({ children }) => <ol className="mb-2 last:mb-0 ml-4">{children}</ol>,
-                  li: ({ children }) => <li className="mb-1">{children}</li>,
-                  code: ({ children }) => (
-                    <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">
-                      {children}
-                    </code>
-                  ),
-                  pre: ({ children }) => (
-                    <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto">
-                      {children}
-                    </pre>
-                  ),
-                }}
-              >
-                {message.content}
-              </ReactMarkdown>
+              <div className="relative">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-2 last:mb-0 ml-4">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-2 last:mb-0 ml-4">{children}</ol>,
+                    li: ({ children }) => <li className="mb-1">{children}</li>,
+                    code: ({ children }) => (
+                      <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">
+                        {children}
+                      </code>
+                    ),
+                    pre: ({ children }) => (
+                      <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto">
+                        {children}
+                      </pre>
+                    ),
+                  }}
+                >
+                  {contentToShow}
+                </ReactMarkdown>
+                {/* Blinking cursor while typing */}
+                {!isComplete && !isUser && (
+                  <span className="inline-block w-2 h-4 bg-gray-400 ml-1 animate-pulse" />
+                )}
+              </div>
             ) : (
-              <p className="mb-0 break-words">{message.content}</p>
+              <p className="mb-0 break-words">{contentToShow}</p>
             )}
           </div>
         </div>
