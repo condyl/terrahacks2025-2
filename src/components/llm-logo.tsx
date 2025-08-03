@@ -3,7 +3,7 @@ import Image from "next/image";
 
 const BaymaxLogo = () => {
   return (
-    <div className="relative">
+    <div className="relative w-12 h-12">
       {/* Radial gradient background circle with border */}
       <div className="w-12 h-12 bg-gradient-radial from-red-500 to-red-600 rounded-full border-2 border-red-400 flex items-center justify-center shadow-lg p-1">
         <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
@@ -19,7 +19,7 @@ const BaymaxLogo = () => {
       </div>
       
       {/* Animated pulse ring */}
-      <div className="absolute inset-0 rounded-full border-2 border-red-300/30 animate-ping" />
+      <div className="absolute top-0 left-0 w-12 h-12 rounded-full border-2 border-red-300/30 animate-ping" />
     </div>
   );
 };
