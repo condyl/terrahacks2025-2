@@ -1,29 +1,45 @@
-import React from "react";
-import { User } from "lucide-react";
+import React, { useState } from "react";
+import { User, Volume2, VolumeX } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { cn, formatTime, formatFileSize } from "@/lib/utils";
 import type { ChatMessageProps } from "@/lib/types";
 import BaymaxLogo from "@/components/llm-logo";
 import { useTypewriter } from "@/hooks/use-typewriter";
+import { useTextToSpeech } from "@/hooks/use-text-to-speech";
 
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
+  const [isHovered, setIsHovered] = useState(false);
+  const { speak, stop, isPlaying, isSupported } = useTextToSpeech();
+  
   const { displayedText, isComplete } = useTypewriter(
     isUser ? message.content : message.content,
-    isUser ? 0 : 8 // Only animate AI messages
+    isUser ? 0 : 5 
   );
 
   // Use the animated text for AI messages, original text for user messages
   const contentToShow = isUser ? message.content : displayedText;
 
+  const handleTTSClick = () => {
+    if (isPlaying) {
+      stop();
+    } else {
+      // Use the full message content for TTS, not just the displayed text
+      speak(message.content);
+    }
+  };
+
   return (
     <div
       className={cn(
-        "flex gap-4 max-w-4xl",
+        "flex gap-4 max-w-4xl relative group",
         isUser ? "ml-auto flex-row-reverse" : "mr-auto"
       )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Avatar */}
       {isUser ? (
@@ -40,7 +56,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
 
       {/* Message Content */}
       <div className={cn(
-        "flex-1 min-w-0",
+        "flex-1 min-w-0 relative",
         isUser ? "text-right" : "text-left"
       )}>
         {/* Image Preview for user messages */}
@@ -68,6 +84,26 @@ export default function ChatMessage({ message }: ChatMessageProps) {
               : "bg-white border border-gray-200 text-foreground rounded-bl-md"
           )}
         >
+          {/* TTS Button for AI messages - positioned right beside the message bubble */}
+          {!isUser && isSupported && isHovered && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleTTSClick}
+              className={cn(
+                "absolute -right-10 top-2 h-8 w-8 p-0 rounded-full bg-white shadow-md border border-gray-200 hover:bg-gray-50 transition-all duration-200 z-10",
+                isPlaying ? "bg-red-50 border-red-200" : ""
+              )}
+              title={isPlaying ? "Stop speaking" : "Read aloud"}
+            >
+              {isPlaying ? (
+                <VolumeX className="h-4 w-4 text-red-600" />
+              ) : (
+                <Volume2 className="h-4 w-4 text-gray-600" />
+              )}
+            </Button>
+          )}
+
           {/* Message tail */}
           <div
             className={cn(

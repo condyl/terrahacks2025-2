@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Send, Loader2, ImagePlus, X } from "lucide-react";
 import { useEnterSubmit } from "@/hooks/use-enter-submit";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export default function ChatForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
   const isValid = isValidMessage(input) || selectedImage;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -91,8 +92,12 @@ export default function ChatForm({
               value={input}
               onChange={handleInputChange}
               onKeyDown={onKeyDown}
-              placeholder={selectedImage ? "Describe what you're concerned about in this image..." : "Describe your symptoms or health concerns..."}
-              className="min-h-[52px] max-h-32 resize-none border-2 border-gray-200 bg-white focus:border-red-400 focus:ring-0 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors"
+              placeholder={
+                selectedImage 
+                  ? "Describe what you're concerned about in this image..." 
+                  : "Describe your symptoms or health concerns..."
+              }
+              className="min-h-[52px] max-h-32 resize-none border-2 bg-white focus:border-red-400 focus:ring-0 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors border-gray-200"
               disabled={isLoading}
               rows={1}
               maxLength={4000}

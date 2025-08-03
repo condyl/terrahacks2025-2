@@ -8,7 +8,22 @@ const fileManager = new GoogleAIFileManager(
   process.env.GEMINI_API_KEY as string
 );
 
+// Simple in-memory cache for development (use Redis in production)
+const responseCache = new Map<string, { response: string; timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+
 async function generateResponse(prompt: string, imageData?: { data: string; mimeType: string; name: string }): Promise<string> {
+  // Create cache key (skip caching for image requests for now)
+  if (!imageData && prompt?.trim()) {
+    const cacheKey = prompt.trim().toLowerCase();
+    const cached = responseCache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log("Returning cached response");
+      return cached.response;
+    }
+  }
+
   if (!prompt?.trim() && !imageData) {
     throw new Error("Prompt or image is required");
   }
@@ -17,9 +32,14 @@ async function generateResponse(prompt: string, imageData?: { data: string; mime
     throw new Error("Prompt is too long. Maximum 4000 characters allowed.");
   }
 
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    systemInstruction: `You are Baymax Lite, a personal healthcare companion inspired by the inflatable healthcare robot from Big Hero 6. 
+  // Try different models in order of preference
+  const models = ["gemini-2.5-flash-lite", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
+  
+  for (let i = 0; i < models.length; i++) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: models[i],
+        systemInstruction: `You are Baymax Lite, a personal healthcare companion inspired by the inflatable healthcare robot from Big Hero 6. 
 
 Your personality:
 - Calm, gentle, and methodical in your responses
@@ -54,46 +74,68 @@ Response format:
 - Use soft, caring language throughout
 
 Remember: You are not a replacement for professional medical care, but a supportive healthcare companion designed to provide information and comfort.`,
-  });
-
-  try {
-    let parts: any[] = [];
-
-    // Add text prompt if provided
-    if (prompt?.trim()) {
-      parts.push({ text: prompt });
-    }
-
-    // Add image if provided
-    if (imageData) {
-      parts.push({
-        inlineData: {
-          mimeType: imageData.mimeType,
-          data: imageData.data
-        }
       });
 
-      // Add specific image analysis instruction
-      const imagePrompt = prompt?.trim() 
-        ? `Please analyze this image in the context of: ${prompt}` 
-        : "Please analyze this image for any visible health concerns, injuries, or symptoms. Provide caring, helpful advice while emphasizing the need for professional medical evaluation.";
-      
-      parts.push({ text: imagePrompt });
-    }
+      let parts: any[] = [];
 
-    const result = await model.generateContent(parts);
-    const response = await result.response;
-    const text = response.text();
-    
-    if (!text?.trim()) {
-      throw new Error("Empty response from AI model");
+      // Add text prompt if provided
+      if (prompt?.trim()) {
+        parts.push({ text: prompt });
+      }
+
+      // Add image if provided
+      if (imageData) {
+        parts.push({
+          inlineData: {
+            mimeType: imageData.mimeType,
+            data: imageData.data
+          }
+        });
+
+        // Add specific image analysis instruction
+        const imagePrompt = prompt?.trim() 
+          ? `Please analyze this image in the context of: ${prompt}` 
+          : "Please analyze this image for any visible health concerns, injuries, or symptoms. Provide caring, helpful advice while emphasizing the need for professional medical evaluation.";
+        
+        parts.push({ text: imagePrompt });
+      }
+
+      const result = await model.generateContent(parts);
+      const response = await result.response;
+      const text = response.text();
+      
+      if (!text?.trim()) {
+        throw new Error("Empty response from AI model");
+      }
+      
+      // Cache successful responses (non-image only)
+      if (!imageData && prompt?.trim()) {
+        responseCache.set(prompt.trim().toLowerCase(), {
+          response: text,
+          timestamp: Date.now()
+        });
+      }
+      
+      return text;
+    } catch (error: any) {
+      console.error(`AI Generation Error with ${models[i]}:`, error);
+      
+      // If it's a quota error and we have more models to try, continue
+      if (error?.message?.includes('quota') || error?.message?.includes('429')) {
+        if (i < models.length - 1) {
+          console.log(`Quota exceeded for ${models[i]}, trying ${models[i + 1]}...`);
+          continue;
+        } else {
+          throw new Error("All AI models have reached their quota limits. Please try again later or upgrade your API plan.");
+        }
+      }
+      
+      // For other errors, don't retry
+      throw new Error("Failed to generate response. Please try again.");
     }
-    
-    return text;
-  } catch (error) {
-    console.error("AI Generation Error:", error);
-    throw new Error("Failed to generate response. Please try again.");
   }
+  
+  throw new Error("Failed to generate response with any available model.");
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
