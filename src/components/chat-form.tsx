@@ -10,7 +10,7 @@ export default function ChatForm({
   input, 
   onInputChange, 
   onSubmit, 
-  isLoading 
+  isLoading
 }: ChatFormProps) {
   const { formRef, onKeyDown } = useEnterSubmit();
   const isValid = isValidMessage(input);
@@ -33,7 +33,7 @@ export default function ChatForm({
             onChange={handleInputChange}
             onKeyDown={onKeyDown}
             placeholder="Describe your symptoms or health concerns..."
-            className="min-h-[52px] max-h-32 resize-none border-2 border-border/50 focus:border-red-400/50 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors"
+            className="min-h-[52px] max-h-32 resize-none border-2 border-gray-200 bg-white focus:border-red-400 focus:ring-0 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors"
             disabled={isLoading}
             rows={1}
             maxLength={4000}
