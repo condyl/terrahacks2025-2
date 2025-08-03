@@ -26,7 +26,7 @@ export interface ApiResponse {
 export interface ChatFormProps {
   input: string;
   onInputChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>, selectedImage?: File | null) => void;
   isLoading: boolean;
 }
 

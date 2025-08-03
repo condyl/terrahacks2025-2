@@ -11,11 +11,7 @@ export default function ChatForm({
   onInputChange, 
   onSubmit, 
   isLoading
-}: ChatFormProps & { 
-  selectedImage?: File | null;
-  onImageSelect?: (file: File | null) => void;
-  onSubmit: (data: { image: File | null }) => void;
-}) {
+}: ChatFormProps) {
   const { formRef, onKeyDown } = useEnterSubmit();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -50,8 +46,8 @@ export default function ChatForm({
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    onSubmit({ image: selectedImage }); // Pass the correct argument structure
-    onSubmit({ image: selectedImage });
+    e.preventDefault();
+    onSubmit(e, selectedImage);
     // Clear image after submit
     removeImage();
   };
