@@ -8,9 +8,9 @@ const fileManager = new GoogleAIFileManager(
   process.env.GEMINI_API_KEY as string
 );
 
-async function generateResponse(prompt: string): Promise<string> {
-  if (!prompt?.trim()) {
-    throw new Error("Prompt cannot be empty");
+async function generateResponse(prompt: string, imageData?: { data: string; mimeType: string; name: string }): Promise<string> {
+  if (!prompt?.trim() && !imageData) {
+    throw new Error("Prompt or image is required");
   }
 
   if (prompt.length > 4000) {
@@ -37,8 +37,17 @@ Your healthcare approach:
 - Be encouraging and supportive
 - Suggest when immediate medical attention may be needed
 
+For image analysis:
+- Carefully examine any provided images for visible symptoms, injuries, or conditions
+- Describe what you observe in clear, non-alarming language
+- Provide general first aid advice where appropriate
+- Always recommend professional medical evaluation for any concerning findings
+- Never provide definitive diagnoses from images alone
+- Be especially cautious with wound assessment and potential infections
+
 Response format:
 - Start with a caring acknowledgment
+- If analyzing an image, describe your observations clearly
 - Provide helpful health information in clear sections
 - Include practical next steps when appropriate
 - End with gentle reminders about professional care
@@ -48,7 +57,31 @@ Remember: You are not a replacement for professional medical care, but a support
   });
 
   try {
-    const result = await model.generateContent(prompt);
+    let parts: any[] = [];
+
+    // Add text prompt if provided
+    if (prompt?.trim()) {
+      parts.push({ text: prompt });
+    }
+
+    // Add image if provided
+    if (imageData) {
+      parts.push({
+        inlineData: {
+          mimeType: imageData.mimeType,
+          data: imageData.data
+        }
+      });
+
+      // Add specific image analysis instruction
+      const imagePrompt = prompt?.trim() 
+        ? `Please analyze this image in the context of: ${prompt}` 
+        : "Please analyze this image for any visible health concerns, injuries, or symptoms. Provide caring, helpful advice while emphasizing the need for professional medical evaluation.";
+      
+      parts.push({ text: imagePrompt });
+    }
+
+    const result = await model.generateContent(parts);
     const response = await result.response;
     const text = response.text();
     
@@ -85,33 +118,43 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { prompt } = body;
+    const { prompt, image } = body;
 
-    // Validate prompt
-    if (!prompt || typeof prompt !== 'string') {
+    // Validate that we have either prompt or image
+    if (!prompt && !image) {
       return NextResponse.json(
-        { error: "Prompt is required and must be a string" },
+        { error: "Either prompt or image is required" },
         { status: 400 }
       );
     }
 
-    const trimmedPrompt = prompt.trim();
-    if (trimmedPrompt.length === 0) {
+    // Validate prompt if provided
+    if (prompt && typeof prompt !== 'string') {
       return NextResponse.json(
-        { error: "Prompt cannot be empty" },
+        { error: "Prompt must be a string" },
         { status: 400 }
       );
     }
 
-    if (trimmedPrompt.length > 4000) {
+    const trimmedPrompt = prompt?.trim() || "";
+    
+    if (trimmedPrompt && trimmedPrompt.length > 4000) {
       return NextResponse.json(
         { error: "Prompt is too long. Maximum 4000 characters allowed." },
         { status: 400 }
       );
     }
 
+    // Validate image if provided
+    if (image && (!image.data || !image.mimeType)) {
+      return NextResponse.json(
+        { error: "Invalid image data" },
+        { status: 400 }
+      );
+    }
+
     // Generate response
-    const aiResponse = await generateResponse(trimmedPrompt);
+    const aiResponse = await generateResponse(trimmedPrompt, image);
 
     const response: ChatResponse = {
       response: aiResponse,

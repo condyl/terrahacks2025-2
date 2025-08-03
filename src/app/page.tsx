@@ -14,6 +14,7 @@ import {
   handleApiError,
   sanitizeInput,
   isValidMessage,
+  convertFileToBase64,
 } from "@/lib/utils";
 import type { Message, ChatResponse, ApiResponse } from "@/lib/types";
 
@@ -35,23 +36,34 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, selectedImage?: File | null) => {
     e.preventDefault();
 
     const sanitizedInput = sanitizeInput(input);
-    if (!isValidMessage(sanitizedInput)) {
-      setError("Please enter a valid message (1-4000 characters)");
+    if (!isValidMessage(sanitizedInput) && !selectedImage) {
+      setError("Please enter a message or upload an image");
       return;
     }
 
     // Clear any existing errors
     setError(null);
 
+    // Create image data for the message if image exists
+    let messageImage: { url: string; name: string; size: number } | undefined;
+    if (selectedImage) {
+      messageImage = {
+        url: URL.createObjectURL(selectedImage),
+        name: selectedImage.name,
+        size: selectedImage.size,
+      };
+    }
+
     const userMessage: Message = {
       id: generateId(),
       role: "user",
-      content: sanitizedInput,
+      content: sanitizedInput || (selectedImage ? "Please analyze this image" : ""),
       timestamp: new Date(),
+      image: messageImage,
     };
 
     // Set hasStarted to true on first submit to trigger layout change
@@ -88,13 +100,28 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
+      // Prepare request body
+      const requestBody: any = {
+        prompt: sanitizedInput || "",
+      };
+
+      // Add image data if present
+      if (selectedImage) {
+        const base64Data = await convertFileToBase64(selectedImage);
+        requestBody.image = {
+          data: base64Data,
+          mimeType: selectedImage.type,
+          name: selectedImage.name,
+        };
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ prompt: sanitizedInput }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

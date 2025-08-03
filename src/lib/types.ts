@@ -4,6 +4,11 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
+  image?: {
+    url: string;
+    name: string;
+    size: number;
+  };
 }
 
 export interface ChatError {
@@ -34,6 +39,11 @@ export interface ChatMessageProps {
 export interface ChatRequest {
   prompt: string;
   context?: string;
+  image?: {
+    data: string; // base64 encoded image
+    mimeType: string;
+    name: string;
+  };
 }
 
 export interface ChatResponse {

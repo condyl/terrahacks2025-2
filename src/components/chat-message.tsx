@@ -3,7 +3,7 @@ import { User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatTime, formatFileSize } from "@/lib/utils";
 import type { ChatMessageProps } from "@/lib/types";
 import BaymaxLogo from "@/components/llm-logo";
 
@@ -35,6 +35,22 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         "flex-1 min-w-0",
         isUser ? "text-right" : "text-left"
       )}>
+        {/* Image Preview for user messages */}
+        {isUser && message.image && (
+          <div className={cn("mb-2", isUser ? "flex justify-end" : "flex justify-start")}>
+            <div>
+              <img 
+                src={message.image.url} 
+                alt="Uploaded image"
+                className="max-w-xs max-h-48 rounded-lg border border-gray-200 shadow-sm"
+              />
+              <div className={cn("text-xs text-muted-foreground mt-1", isUser ? "text-right" : "text-left")}>
+                {message.image.name} ({formatFileSize(message.image.size)})
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Message Bubble */}
         <div
           className={cn(
