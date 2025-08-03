@@ -12,9 +12,9 @@ export default function LoadingIndicator() {
 
       {/* Loading Message */}
       <div className="flex-1 min-w-0">
-        <div className="inline-block px-4 py-3 rounded-2xl rounded-bl-md shadow-sm bg-white border border-gray-200 text-foreground relative max-w-[85%]">
+        <div className="inline-block px-4 py-3 rounded-2xl rounded-bl-md shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-foreground relative max-w-[85%]">
           {/* Message tail */}
-          <div className="absolute w-3 h-3 rotate-45 bg-white border-r border-b border-gray-200 -bottom-1 left-2" />
+          <div className="absolute w-3 h-3 rotate-45 bg-white dark:bg-gray-800 border-r border-b border-gray-200 dark:border-gray-700 -bottom-1 left-2" />
 
           <div
             className="flex items-center gap-3"

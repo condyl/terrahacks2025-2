@@ -73,7 +73,7 @@ export default function ChatMessage({ message, onTypingComplete }: ChatMessagePr
               <img 
                 src={message.image.url} 
                 alt="Uploaded image"
-                className="max-w-xs max-h-48 rounded-lg border border-gray-200 shadow-sm"
+                className="max-w-xs max-h-48 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm"
               />
               <div className={cn("text-xs text-muted-foreground mt-1", isUser ? "text-right" : "text-left")}>
                 {message.image.name} ({formatFileSize(message.image.size)})
@@ -88,7 +88,7 @@ export default function ChatMessage({ message, onTypingComplete }: ChatMessagePr
             "inline-block px-4 py-3 rounded-2xl shadow-sm max-w-[85%] relative",
             isUser
               ? "bg-gradient-to-r from-red-500 to-red-600 text-white rounded-br-md"
-              : "bg-white border border-gray-200 text-foreground rounded-bl-md"
+              : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-foreground rounded-bl-md"
           )}
         >
           {/* TTS Button for AI messages - positioned right beside the message bubble */}
@@ -98,15 +98,15 @@ export default function ChatMessage({ message, onTypingComplete }: ChatMessagePr
               size="sm"
               onClick={handleTTSClick}
               className={cn(
-                "absolute -right-10 top-2 h-8 w-8 p-0 rounded-full bg-white shadow-md border border-gray-200 hover:bg-gray-50 transition-all duration-200 z-10",
-                isPlaying ? "bg-red-50 border-red-200" : ""
+                "absolute -right-10 top-2 h-8 w-8 p-0 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 z-10",
+                isPlaying ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700" : ""
               )}
               title={isPlaying ? "Stop speaking" : "Read aloud"}
             >
               {isPlaying ? (
                 <VolumeX className="h-4 w-4 text-red-600" />
               ) : (
-                <Volume2 className="h-4 w-4 text-gray-600" />
+                <Volume2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               )}
             </Button>
           )}
@@ -117,7 +117,7 @@ export default function ChatMessage({ message, onTypingComplete }: ChatMessagePr
               "absolute w-3 h-3 rotate-45",
               isUser
                 ? "bg-red-600 -bottom-1 right-2"
-                : "bg-white border-r border-b border-gray-200 -bottom-1 left-2"
+                : "bg-white dark:bg-gray-800 border-r border-b border-gray-200 dark:border-gray-700 -bottom-1 left-2"
             )}
           />
           
@@ -137,12 +137,12 @@ export default function ChatMessage({ message, onTypingComplete }: ChatMessagePr
                     ol: ({ children }) => <ol className="mb-2 last:mb-0 ml-4">{children}</ol>,
                     li: ({ children }) => <li className="mb-1">{children}</li>,
                     code: ({ children }) => (
-                      <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">
+                      <code className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800 dark:text-gray-200">
                         {children}
                       </code>
                     ),
                     pre: ({ children }) => (
-                      <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto">
+                      <pre className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg overflow-x-auto">
                         {children}
                       </pre>
                     ),

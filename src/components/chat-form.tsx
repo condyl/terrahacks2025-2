@@ -66,14 +66,14 @@ export default function ChatForm({
   };
 
   return (
-    <div className="bg-white p-4">
+    <div className="bg-white dark:bg-gray-800 p-4">
       <div className="max-w-5xl mx-auto">
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
           {/* Image Preview - Now above the input */}
           {selectedImage && imagePreview && (
             <div className="flex justify-start">
               <div className="relative inline-block">
-                <div className="bg-white border-2 border-gray-200 rounded-lg p-2 max-w-xs">
+                <div className="bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 max-w-xs">
                   <img 
                     src={imagePreview} 
                     alt="Selected image" 
@@ -108,7 +108,7 @@ export default function ChatForm({
                     ? "Describe what you're concerned about in this image..." 
                     : "Describe your symptoms or health concerns..."
                 }
-                className="min-h-[52px] max-h-32 resize-none border-2 bg-white focus:border-red-400 focus:ring-0 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors border-gray-200"
+                className="min-h-[52px] max-h-32 resize-none border-2 bg-white dark:bg-gray-700 focus:border-red-400 focus:ring-0 rounded-2xl px-4 py-3 pr-12 text-sm transition-colors border-gray-200 dark:border-gray-600 text-foreground placeholder:text-muted-foreground"
                 disabled={disabled || isLoading}
                 rows={1}
                 maxLength={4000}
@@ -128,7 +128,7 @@ export default function ChatForm({
               type="button"
               variant="outline"
               size="sm"
-              className="h-12 w-12 rounded-xl border-2 border-gray-200 hover:border-red-400 transition-colors"
+              className="h-12 w-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-red-400 transition-colors"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled || isLoading}
             >

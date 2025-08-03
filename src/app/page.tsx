@@ -9,6 +9,7 @@ import BaymaxLogo from "@/components/llm-logo";
 import ChatMessage from "@/components/chat-message";
 import ChatForm from "@/components/chat-form";
 import LoadingIndicator from "@/components/loading-indicator";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
 import {
   generateId,
   handleApiError,
@@ -169,10 +170,15 @@ export default function Chat() {
   if (!hasStarted) {
     return (
       <div
-        className={`min-h-screen flex flex-col bg-gray-50 transition-all duration-500 ease-in-out ${
+        className={`min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-all duration-500 ease-in-out ${
           isTransitioning ? "opacity-90 scale-98" : "opacity-100 scale-100"
         }`}
       >
+        {/* Dark mode toggle - positioned in top right */}
+        <div className="absolute top-4 right-4 z-50">
+          <DarkModeToggle />
+        </div>
+
         {/* Animated header that slides in from top during transition */}
         <div
           className={`transform transition-all duration-700 ease-in-out ${
@@ -181,7 +187,7 @@ export default function Chat() {
               : "-translate-y-full opacity-0 absolute"
           }`}
         >
-          <div className="py-4 px-4 lg:px-6 bg-white border-b border-gray-200">
+          <div className="py-4 px-4 lg:px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div className="max-w-5xl mx-auto">
               <div className="flex items-center justify-center gap-3">
                 <BaymaxLogo />
@@ -248,7 +254,7 @@ export default function Chat() {
             )}
 
             {/* Centered Input Form */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-1">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-1">
               <ChatForm
                 input={input}
                 onInputChange={setInput}
@@ -284,12 +290,12 @@ export default function Chat() {
     >
       {/* Header - Slides in from top */}
       <div
-        className={`sticky top-0 z-50 flex-shrink-0 py-2 px-4 lg:px-6 bg-white border-b border-gray-200 transform transition-all duration-700 ease-in-out ${
+        className={`sticky top-0 z-50 flex-shrink-0 py-2 px-4 lg:px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transform transition-all duration-700 ease-in-out ${
           isTransitioning ? "translate-y-0 opacity-100" : "translate-y-0 opacity-100"
         }`}
       >
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-2">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center justify-center gap-2 flex-1">
             <div className="scale-75">
               <BaymaxLogo />
             </div>
@@ -297,6 +303,7 @@ export default function Chat() {
               Baymax Lite
             </CardTitle>
           </div>
+          <DarkModeToggle />
         </div>
       </div>
 
@@ -323,7 +330,7 @@ export default function Chat() {
 
       {/* Chat Container - Fades in */}
       <div
-        className={`flex-1 bg-gray-50 transition-all duration-500 ease-in-out delay-200 ${
+        className={`flex-1 bg-gray-50 dark:bg-gray-900 transition-all duration-500 ease-in-out delay-200 ${
           isTransitioning ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
         }`}
       >
