@@ -39,6 +39,7 @@ export interface ChatMessageProps {
 // API request types
 export interface ChatRequest {
   prompt: string;
+  messages?: Message[]; // Add conversation history
   context?: string;
   image?: {
     data: string; // base64 encoded image

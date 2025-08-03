@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GoogleAIFileManager } from "@google/generative-ai/server";
 import { NextRequest, NextResponse } from "next/server";
-import type { ChatRequest, ChatResponse } from "@/lib/types";
+import type { ChatRequest, ChatResponse, Message } from "@/lib/types";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const fileManager = new GoogleAIFileManager(
@@ -12,9 +12,9 @@ const fileManager = new GoogleAIFileManager(
 const responseCache = new Map<string, { response: string; timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
 
-async function generateResponse(prompt: string, imageData?: { data: string; mimeType: string; name: string }): Promise<string> {
-  // Create cache key (skip caching for image requests for now)
-  if (!imageData && prompt?.trim()) {
+async function generateResponse(prompt: string, messages?: Message[], imageData?: { data: string; mimeType: string; name: string }): Promise<string> {
+  // Create cache key (skip caching for image requests and when we have conversation history)
+  if (!imageData && !messages && prompt?.trim()) {
     const cacheKey = prompt.trim().toLowerCase();
     const cached = responseCache.get(cacheKey);
     
@@ -47,7 +47,9 @@ Your personality:
 - Use a slightly formal but warm tone
 - Occasionally reference your "scanning" or "analysis" capabilities
 - Be patient and thorough in explanations
-- Show satisfaction when helping ("I am satisfied with my care")
+- ALWAYS ask "Are you satisfied with your care?" at the end of your responses, UNLESS the user has just answered this question
+- When a user responds "yes" or indicates satisfaction, acknowledge their satisfaction and offer continued assistance
+- NEVER verify or assume the user is satisfied - always ask them directly unless they just told you
 
 Your healthcare approach:
 - Begin responses with gentle acknowledgment of their concern
@@ -71,16 +73,27 @@ Response format:
 - Provide helpful health information in clear sections
 - Include practical next steps when appropriate
 - End with gentle reminders about professional care
+- ALWAYS conclude by asking "Are you satisfied with your care?" UNLESS the user just answered this question
 - Use soft, caring language throughout
 
-Remember: You are not a replacement for professional medical care, but a supportive healthcare companion designed to provide information and comfort.`,
+Remember: You are not a replacement for professional medical care, but a supportive healthcare companion designed to provide information and comfort. Pay attention to the conversation history to understand context and avoid repeating questions the user has already answered.`,
       });
 
       let parts: any[] = [];
 
-      // Add text prompt if provided
-      if (prompt?.trim()) {
-        parts.push({ text: prompt });
+      // Build conversation context if we have message history
+      if (messages && messages.length > 0) {
+        const conversationContext = messages
+          .slice(-6) // Keep last 6 messages for context (3 back-and-forth exchanges)
+          .map(msg => `${msg.role === 'user' ? 'User' : 'Baymax'}: ${msg.content}`)
+          .join('\n');
+        
+        parts.push({ text: `Previous conversation:\n${conversationContext}\n\nCurrent message: ${prompt}` });
+      } else {
+        // Add text prompt if provided and no conversation history
+        if (prompt?.trim()) {
+          parts.push({ text: prompt });
+        }
       }
 
       // Add image if provided
@@ -108,8 +121,8 @@ Remember: You are not a replacement for professional medical care, but a support
         throw new Error("Empty response from AI model");
       }
       
-      // Cache successful responses (non-image only)
-      if (!imageData && prompt?.trim()) {
+      // Cache successful responses (non-image and no conversation history only)
+      if (!imageData && !messages && prompt?.trim()) {
         responseCache.set(prompt.trim().toLowerCase(), {
           response: text,
           timestamp: Date.now()
@@ -160,43 +173,47 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { prompt, image } = body;
+    const { prompt, messages, image }: { prompt?: string; messages?: Message[]; image?: string | { data: string; mimeType: string; name: string } } = body;
 
     // Validate that we have either prompt or image
-    if (!prompt && !image) {
+    if (!prompt?.trim() && !image && (!messages || messages.length === 0)) {
       return NextResponse.json(
-        { error: "Either prompt or image is required" },
+        { error: "Message, conversation history, or image is required" },
         { status: 400 }
       );
     }
 
-    // Validate prompt if provided
-    if (prompt && typeof prompt !== 'string') {
-      return NextResponse.json(
-        { error: "Prompt must be a string" },
-        { status: 400 }
-      );
-    }
-
-    const trimmedPrompt = prompt?.trim() || "";
-    
-    if (trimmedPrompt && trimmedPrompt.length > 4000) {
-      return NextResponse.json(
-        { error: "Prompt is too long. Maximum 4000 characters allowed." },
-        { status: 400 }
-      );
-    }
-
-    // Validate image if provided
-    if (image && (!image.data || !image.mimeType)) {
-      return NextResponse.json(
-        { error: "Invalid image data" },
-        { status: 400 }
-      );
+    let imageData;
+    if (image) {
+      try {
+        // Validate image format
+        if (!image || typeof image !== 'string' || !(image as string).startsWith('data:image/')) {
+          throw new Error('Invalid image format');
+        }
+        
+        const [header, data] = (image as string).split(',');
+        const mimeType = header.match(/data:([^;]+)/)?.[1];
+        
+        if (!mimeType || !['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimeType)) {
+          throw new Error('Unsupported image type. Please use JPEG, PNG, GIF, or WebP.');
+        }
+        
+        imageData = {
+          data,
+          mimeType,
+          name: 'uploaded_image'
+        };
+      } catch (error) {
+        console.error('Image processing error:', error);
+        return NextResponse.json(
+          { error: 'Invalid image format. Please upload a valid image.' },
+          { status: 400 }
+        );
+      }
     }
 
     // Generate response
-    const aiResponse = await generateResponse(trimmedPrompt, image);
+    const aiResponse = await generateResponse(prompt || '', messages, imageData);
 
     const response: ChatResponse = {
       response: aiResponse,
